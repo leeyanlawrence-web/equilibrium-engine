@@ -1,0 +1,13 @@
+{
+  "name": "equilibrium-engine",
+  "version": "1.0.0",
+  "description": "A threshold law for security economics — game-theoretic models of attacker/defender behavior, built for the Moonshot Hackathon.",
+  "main": "engine.js",
+  "scripts": {
+    "start": "node server.js",
+    "selftest": "node selftest.js",
+    "validate": "node validate.js"
+  },
+  "dependencies": {},
+  "license": "MIT"
+}

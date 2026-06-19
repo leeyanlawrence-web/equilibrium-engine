@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equilibrium — Security Economics Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0E12;
+    --bg-panel: #11151B;
+    --line: #232A33;
+    --text: #E8E6DE;
+    --text-dim: #8A9099;
+    --amber: #D4A24C;
+    --red: #C0432F;
+    --slate: #3A4048;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-height: 100vh;
+    padding-bottom: 60px;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ---------- Header ---------- */
+  header {
+    padding: 28px 20px 20px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: 8px;
+    line-height: 1.5;
+    max-width: 560px;
+  }
+
+  /* ---------- Scenario tabs ---------- */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg-panel);
+    color: var(--text-dim);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .tab.active {
+    border-color: var(--amber);
+    color: var(--amber);
+    background: rgba(212, 162, 76, 0.08);
+  }
+
+  .question {
+    padding: 14px 20px 0;
+    font-size: 14px;
+    color: var(--text-dim);
+    font-style: italic;
+  }
+
+  /* ---------- Main layout ---------- */
+  main {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .panel-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  /* ---------- Sliders ---------- */
+  .slider-row {
+    margin-bottom: 18px;
+  }
+
+  .slider-row:last-child { margin-bottom: 0; }
+
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .slider-name { color: var(--text); }
+
+  .slider-value {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--amber);
+    font-weight: 600;
+  }
+
+  input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: var(--slate);
+    border-radius: 2px;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--amber);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+    box-shadow: 0 0 0 1px var(--amber);
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--amber);
+    cursor: pointer;
+    border: 2px solid var(--bg);
+  }
+
+  /* ---------- The Needle (signature element) ---------- */
+  .needle-panel {
+    text-align: center;
+    padding: 28px 18px 22px;
+  }
+
+  .needle-track {
+    position: relative;
+    height: 70px;
+    margin: 0 auto 14px;
+    max-width: 320px;
+  }
+
+  .needle-gradient {
+    position: absolute;
+    top: 28px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--red) 0%, var(--slate) 50%, var(--amber) 100%);
+  }
+
+  .needle-pointer {
+    position: absolute;
+    top: 0;
+    width: 2px;
+    height: 70px;
+    background: var(--text);
+    left: 50%;
+    transition: left 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transform: translateX(-1px);
+  }
+
+  .needle-pointer::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: -5px;
+    width: 12px;
+    height: 12px;
+    background: var(--text);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  }
+
+  .needle-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  .needle-labels .left { color: var(--red); }
+  .needle-labels .right { color: var(--amber); }
+
+  .needle-readout {
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .needle-readout strong {
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ---------- Stats grid ---------- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .stat {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px;
+  }
+
+  .stat-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .stat-value.amber { color: var(--amber); }
+  .stat-value.red { color: var(--red); }
+
+  .stat-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ---------- Interpretation banner ---------- */
+  .interpretation {
+    border-left: 3px solid var(--amber);
+    padding: 12px 14px;
+    background: rgba(212, 162, 76, 0.06);
+    font-size: 13px;
+    line-height: 1.5;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .interpretation.warn {
+    border-left-color: var(--red);
+    background: rgba(192, 67, 47, 0.06);
+  }
+
+  /* ---------- Chart ---------- */
+  .chart-wrap {
+    width: 100%;
+    height: 180px;
+    position: relative;
+  }
+
+  svg { width: 100%; height: 100%; overflow: visible; }
+
+  /* ---------- API panel ---------- */
+  .api-block {
+    background: #050708;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.6;
+    overflow-x: auto;
+    color: #9FE0A0;
+    white-space: pre;
+  }
+
+  .api-block .comment { color: var(--text-dim); }
+  .api-block .key { color: var(--amber); }
+
+  footer {
+    padding: 24px 20px 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  @media (min-width: 700px) {
+    .desktop-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">Moonshot — Security Economics Engine</div>
+  <h1>Equilibrium</h1>
+  <p class="subtitle">
+    Security spending is usually guesswork. This models attacker and defender
+    as rational economic agents in a repeated game, and computes the
+    mathematically optimal defense strategy — not the maximal one.
+  </p>
+</header>
+
+<div class="tabs" id="tabs"></div>
+<div class="question mono" id="question"></div>
+
+<main>
+  <div class="desktop-grid">
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="panel">
+        <div class="panel-label">Parameters</div>
+        <div id="sliders"></div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 20px;">
+      <div class="panel needle-panel">
+        <div class="panel-label" style="text-align:left;">Equilibrium Needle</div>
+        <div class="needle-track">
+          <div class="needle-gradient"></div>
+          <div class="needle-pointer" id="needlePointer"></div>
+        </div>
+        <div class="needle-labels">
+          <span class="left">Don't Defend</span>
+          <span class="right">Defend</span>
+        </div>
+        <div class="needle-readout" id="needleReadout"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Equilibrium Result</div>
+        <div class="stats-grid" id="stats"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-label">Interpretation</div>
+        <div class="interpretation" id="interpretation"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Sensitivity — Equilibrium Defense Probability vs. Asset Value</div>
+    <div class="chart-wrap">
+      <svg id="chart" viewBox="0 0 600 180" preserveAspectRatio="none"></svg>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">The Threshold Law — Θ</div>
+    <p style="font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:16px;">
+      Every scenario above is one lever moving a system relative to the same boundary:
+      an attack is rational exactly when <span class="mono" style="color:var(--text)">effective cost &lt; expected gain</span>.
+      This view shows raw cost vs. gain and how far this system sits from that line.
+    </p>
+    <div class="chart-wrap" style="height: 160px;">
+      <svg id="thresholdChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="needle-readout" id="thresholdReadout" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Repeated Game — Attacker Belief Drift Over 12 Rounds</div>
+    <p style="font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:12px;">
+      The static equilibrium above is a snapshot. Real attackers learn from outcomes.
+      This simulates an attacker updating their belief about your defense strength after each
+      probe — showing whether the threat escalates or fades with repeated play.
+    </p>
+    <button id="runRepeatedGame" style="font-family:'JetBrains Mono',monospace; font-size:12px; padding:10px 16px; background:rgba(212,162,76,0.1); border:1px solid var(--amber); color:var(--amber); border-radius:6px; cursor:pointer; margin-bottom:14px;">
+      Run 12-round simulation
+    </button>
+    <div class="chart-wrap" style="height: 160px;">
+      <svg id="repeatedChart" viewBox="0 0 600 160" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="needle-readout" id="repeatedReadout" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Validation Against Reality</div>
+    <p style="font-size:13px; color:var(--text-dim); line-height:1.6;">
+      The Threshold Law makes a falsifiable prediction: real exploit rates should jump
+      sharply near Θ, not rise smoothly. <code class="mono" style="color:var(--amber)">validate.js</code>
+      tests this against two live public datasets — FIRST.org's EPSS scores and CISA's
+      Known Exploited Vulnerabilities catalog — no API key required. Run it with
+      <code class="mono" style="color:var(--amber)">node validate.js</code> on any machine with internet.
+      Its analysis logic is independently verified offline by <code class="mono" style="color:var(--amber)">selftest.js</code>
+      against synthetic ground truth before ever touching real data.
+    </p>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Extension — Ransomware Payment Policy</div>
+    <p style="font-size:13px; color:var(--text-dim); line-height:1.6; margin-bottom:16px;">
+      A different question: the attack already succeeded — should the victim pay?
+      This applies the same threshold logic one step later, with one new mechanism:
+      <strong style="color:var(--text)">ransom paid this round funds the attacker's capability next round.</strong>
+      That's what makes paying individually rational but collectively self-defeating —
+      the real argument behind proposals to ban ransomware payments outright.
+    </p>
+
+    <div class="slider-row">
+      <div class="slider-label"><span class="slider-name">Ransom demand</span><span class="slider-value mono" id="val-rw-ransom">$15,000</span></div>
+      <input type="range" id="rw-ransom" min="1000" max="100000" step="1000" value="15000">
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><span class="slider-name">Cost to victim if data is lost</span><span class="slider-value mono" id="val-rw-loss">$200,000</span></div>
+      <input type="range" id="rw-loss" min="10000" max="1000000" step="10000" value="200000">
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><span class="slider-name">Ban penalty if caught paying</span><span class="slider-value mono" id="val-rw-penalty">$400,000</span></div>
+      <input type="range" id="rw-penalty" min="0" max="1000000" step="10000" value="400000">
+    </div>
+    <div class="slider-row">
+      <div class="slider-label"><span class="slider-name">Financing sensitivity</span><span class="slider-value mono" id="val-rw-financing">40%</span></div>
+      <input type="range" id="rw-financing" min="0" max="1" step="0.05" value="0.4">
+    </div>
+
+    <button id="runRansomware" style="font-family:'JetBrains Mono',monospace; font-size:12px; padding:10px 16px; background:rgba(212,162,76,0.1); border:1px solid var(--amber); color:var(--amber); border-radius:6px; cursor:pointer; margin: 14px 0;">
+      Run 25-round policy comparison
+    </button>
+
+    <div class="chart-wrap" style="height: 200px;">
+      <svg id="ransomwareChart" viewBox="0 0 600 200" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="needle-readout" id="ransomwareReadout" style="margin-top:14px;"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">Equivalent API Call</div>
+    <div class="api-block mono" id="apiBlock"></div>
+  </div>
+</main>
+
+<footer>EQUILIBRIUM ENGINE · BUILT FOR MOONSHOT 2026 · NO BACKEND REQUIRED FOR THIS DEMO</footer>
+
+<script>
+/* ============================================================
+   GAME THEORY ENGINE (mirrors engine.js — inlined so this page
+   works standalone with zero server dependency)
+   ============================================================ */
+function solveEquilibrium(params) {
+  const { assetValue, defenseCost, attackCost, breachGain, residualRisk, detectionProb } = params;
+  const effectiveAttackCost = attackCost / Math.max(0.05, 1 - detectionProb * 0.5);
+  const lossNoDefense = assetValue;
+  const lossWithDefense = residualRisk * assetValue;
+
+  const denomQ = (lossNoDefense - lossWithDefense);
+  let qStar = denomQ > 0 ? defenseCost / denomQ : 1;
+  qStar = clamp(qStar, 0, 1);
+
+  const denomP = breachGain * (1 - residualRisk);
+  let pStar = denomP > 0 ? (breachGain - effectiveAttackCost) / denomP : 0;
+  pStar = clamp(pStar, 0, 1);
+
+  const defenderExpectedPayoff =
+    pStar * (-defenseCost - qStar * lossWithDefense) + (1 - pStar) * (-qStar * lossNoDefense);
+  const attackerExpectedPayoff =
+    qStar * (pStar * (residualRisk * breachGain - effectiveAttackCost) + (1 - pStar) * (breachGain - effectiveAttackCost));
+
+  const attackIsRational = effectiveAttackCost < breachGain;
+
+  const attackerBestResponseToAlwaysDefend = (residualRisk * breachGain > effectiveAttackCost) ? 1 : 0;
+  const alwaysDefendCost = defenseCost + attackerBestResponseToAlwaysDefend * lossWithDefense;
+  const attackerBestResponseToNeverDefend = (breachGain > effectiveAttackCost) ? 1 : 0;
+  const neverDefendCost = attackerBestResponseToNeverDefend * lossNoDefense;
+  const equilibriumCost = -defenderExpectedPayoff;
+  const bestNaiveCost = Math.min(alwaysDefendCost, neverDefendCost);
+  const efficiencyGain = bestNaiveCost - equilibriumCost;
+
+  return {
+    pStar, qStar, defenderExpectedPayoff, attackerExpectedPayoff, attackIsRational,
+    effectiveAttackCost, alwaysDefendCost, neverDefendCost, equilibriumCost, efficiencyGain,
+    interpretation: interpret(pStar, attackIsRational),
+  };
+}
+function interpret(pStar, attackIsRational) {
+  if (!attackIsRational) return "Attack is economically irrational at any defense level. Minimal defense investment is optimal.";
+  if (pStar > 0.75) return "High defense investment is justified — asset value far exceeds defense cost relative to attacker incentives.";
+  if (pStar < 0.25) return "Heavy defense spending here is economically inefficient. Attacker incentives are low or attack cost is already prohibitive.";
+  return "A mixed strategy is optimal: partial, probabilistic investment outperforms always-on maximum defense.";
+}
+function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
+
+function thresholdPosition(params) {
+  const { attackCost, breachGain, detectionProb } = params;
+  const effectiveAttackCost = attackCost / Math.max(0.05, 1 - detectionProb * 0.5);
+  const thresholdRatio = effectiveAttackCost / breachGain;
+  const distanceToThreshold = thresholdRatio - 1;
+  return {
+    effectiveAttackCost, breachGain, thresholdRatio, distanceToThreshold,
+    regime: thresholdRatio < 1 ? "ATTACK_RATIONAL" : "ATTACK_IRRATIONAL",
+    gainReductionNeededToFlip: thresholdRatio < 1 ? breachGain - effectiveAttackCost : 0,
+  };
+}
+
+function simulateRepeatedGame(params, rounds = 12) {
+  let belief = params.residualRisk;
+  const trueResidualRisk = params.residualRisk;
+  const history = [];
+  for (let t = 0; t < rounds; t++) {
+    const roundParams = { ...params, residualRisk: belief };
+    const result = solveEquilibrium(roundParams);
+    const attacked = Math.random() < result.qStar;
+    const succeeded = attacked && Math.random() < trueResidualRisk;
+    const learningRate = 1 / (t + 3);
+    if (attacked) {
+      const observedSignal = succeeded ? 1 : 0;
+      belief = clamp(belief + learningRate * (observedSignal - belief), 0.01, 0.99);
+    }
+    history.push({ round: t + 1, belief, pStar: result.pStar, qStar: result.qStar, attacked, succeeded });
+  }
+  const initialQStar = history[0].qStar;
+  const finalQStar = history[history.length - 1].qStar;
+  return {
+    history, initialQStar, finalQStar,
+    driftDirection: finalQStar > initialQStar ? "escalating" : finalQStar < initialQStar ? "de-escalating" : "stable",
+  };
+}
+
+/* ============================================================
+   RANSOMWARE POLICY MODEL (mirrors engine.js extension)
+   ============================================================ */
+function individualPayDecision(params) {
+  const { ransomDemand, dataValueIfLost, recoveryProbIfPay, banEnforcementProb, banPenalty } = params;
+  const effectiveCostToPay = ransomDemand + banEnforcementProb * banPenalty;
+  const expectedLossIfPay = (1 - recoveryProbIfPay) * dataValueIfLost + effectiveCostToPay;
+  const expectedLossIfNotPay = dataValueIfLost;
+  return {
+    effectiveCostToPay, expectedLossIfPay, expectedLossIfNotPay,
+    payIsRational: expectedLossIfPay < expectedLossIfNotPay,
+    individualThresholdRatio: expectedLossIfPay / expectedLossIfNotPay,
+  };
+}
+
+function simulateRansomwarePolicy(params, rounds = 10) {
+  const {
+    population, ransomDemand, dataValueIfLost, recoveryProbIfPay,
+    banEnforcementProb, banPenalty, financingSensitivity, capabilityDecay, baseAttackCapability,
+  } = params;
+  let capability = baseAttackCapability;
+  const history = [];
+  for (let t = 0; t < rounds; t++) {
+    const victimsAttacked = Math.min(population, Math.round(population * 0.1 * capability));
+    const effectiveDataLoss = dataValueIfLost * capability;
+    const decision = individualPayDecision({ ransomDemand, dataValueIfLost: effectiveDataLoss, recoveryProbIfPay, banEnforcementProb, banPenalty });
+    const payers = decision.payIsRational ? victimsAttacked : 0;
+    const revenueCollected = payers * ransomDemand;
+    const maxPossibleRevenueThisRound = victimsAttacked * ransomDemand;
+    const fundingBoost = financingSensitivity * (maxPossibleRevenueThisRound > 0 ? revenueCollected / maxPossibleRevenueThisRound : 0);
+    capability = clamp(capability * (1 - capabilityDecay) + fundingBoost, 0.05, 999);
+    const totalHarmThisRound = payers * decision.effectiveCostToPay + (victimsAttacked - payers) * effectiveDataLoss;
+    history.push({ round: t + 1, capability, victimsAttacked, payers, payIsRational: decision.payIsRational, revenueCollected, totalHarmThisRound });
+  }
+  const totalHarm = history.reduce((s, h) => s + h.totalHarmThisRound, 0);
+  return { history, totalHarm, finalCapability: history[history.length - 1].capability };
+}
+
+function compareBanPolicy(baseParams, rounds = 20) {
+  const allowed = simulateRansomwarePolicy({ ...baseParams, banEnforcementProb: 0.02 }, rounds);
+  const banned = simulateRansomwarePolicy({ ...baseParams, banEnforcementProb: 0.95 }, rounds);
+  let cumAllowed = 0, cumBanned = 0, crossoverRound = null;
+  for (let i = 0; i < rounds; i++) {
+    cumAllowed += allowed.history[i].totalHarmThisRound;
+    cumBanned += banned.history[i].totalHarmThisRound;
+    if (crossoverRound === null && cumBanned < cumAllowed) crossoverRound = i + 1;
+  }
+  return { allowed, banned, banReducesHarm: banned.totalHarm < allowed.totalHarm, crossoverRound };
+}
+
+const RANSOMWARE_DEFAULTS = {
+  population: 1000, ransomDemand: 15000, dataValueIfLost: 200000, recoveryProbIfPay: 0.85,
+  banPenalty: 400000, financingSensitivity: 0.4, capabilityDecay: 0.1, baseAttackCapability: 1.0,
+};
+
+/* ============================================================
+   SCENARIOS
+   ============================================================ */
+const SCENARIOS = {
+  patchTiming: {
+    id: "patchTiming", name: "Patch Timing",
+    question: "Should we patch now, or accept the exposure window?",
+    sliders: [
+      { key: "systemValue", label: "Asset value at risk", min: 10000, max: 2000000, step: 10000, fmt: "$", default: 500000 },
+      { key: "patchCost", label: "Cost to patch", min: 500, max: 100000, step: 500, fmt: "$", default: 8000 },
+      { key: "exploitDevCost", label: "Attacker's cost to build exploit", min: 1000, max: 200000, step: 1000, fmt: "$", default: 15000 },
+      { key: "dataValueOnBlackMarket", label: "Breach value to attacker", min: 5000, max: 500000, step: 5000, fmt: "$", default: 120000 },
+      { key: "patchEffectiveness", label: "Patch effectiveness", min: 0.5, max: 0.99, step: 0.01, fmt: "%", default: 0.85 },
+      { key: "detectionProb", label: "Detection probability", min: 0, max: 0.95, step: 0.05, fmt: "%", default: 0.4 },
+    ],
+    mapParams: (s) => ({
+      assetValue: s.systemValue, defenseCost: s.patchCost, attackCost: s.exploitDevCost,
+      breachGain: s.dataValueOnBlackMarket, residualRisk: 1 - s.patchEffectiveness, detectionProb: s.detectionProb,
+    }),
+  },
+  bountyPricing: {
+    id: "bountyPricing", name: "Bug Bounty Pricing",
+    question: "How should we price bounties to beat the black market?",
+    sliders: [
+      { key: "systemValue", label: "Asset value at risk", min: 50000, max: 5000000, step: 50000, fmt: "$", default: 2000000 },
+      { key: "bountyPayout", label: "Bounty payout offered", min: 1000, max: 150000, step: 1000, fmt: "$", default: 25000 },
+      { key: "exploitDevCost", label: "Attacker's cost to build exploit", min: 1000, max: 200000, step: 1000, fmt: "$", default: 18000 },
+      { key: "blackMarketPrice", label: "Black market resale price", min: 5000, max: 500000, step: 5000, fmt: "$", default: 60000 },
+      { key: "detectionProb", label: "Detection probability", min: 0, max: 0.95, step: 0.05, fmt: "%", default: 0.3 },
+    ],
+    mapParams: (s) => ({
+      assetValue: s.systemValue, defenseCost: s.bountyPayout, attackCost: s.exploitDevCost,
+      breachGain: s.blackMarketPrice, residualRisk: 0.1, detectionProb: s.detectionProb,
+    }),
+  },
+  resourceAllocation: {
+    id: "resourceAllocation", name: "Resource Allocation",
+    question: "With a limited budget across N systems, where should defense spend go?",
+    sliders: [
+      { key: "systemValue", label: "Asset value per system", min: 50000, max: 3000000, step: 50000, fmt: "$", default: 150000 },
+      { key: "budgetPerSystem", label: "Defense budget per system", min: 1000, max: 100000, step: 1000, fmt: "$", default: 40000 },
+      { key: "exploitDevCost", label: "Attacker's cost to build exploit", min: 1000, max: 200000, step: 1000, fmt: "$", default: 12000 },
+      { key: "breachValue", label: "Breach value to attacker", min: 5000, max: 500000, step: 5000, fmt: "$", default: 60000 },
+      { key: "residualRisk", label: "Residual risk after defense", min: 0.02, max: 0.6, step: 0.02, fmt: "%", default: 0.25 },
+      { key: "detectionProb", label: "Detection probability", min: 0, max: 0.95, step: 0.05, fmt: "%", default: 0.15 },
+    ],
+    mapParams: (s) => ({
+      assetValue: s.systemValue, defenseCost: s.budgetPerSystem, attackCost: s.exploitDevCost,
+      breachGain: s.breachValue, residualRisk: s.residualRisk, detectionProb: s.detectionProb,
+    }),
+  },
+};
+
+/* ============================================================
+   APP STATE + RENDERING
+   ============================================================ */
+let currentScenarioId = "patchTiming";
+let sliderValues = {};
+
+function fmtVal(v, fmt) {
+  if (fmt === "$") return "$" + Math.round(v).toLocaleString();
+  if (fmt === "%") return Math.round(v * 100) + "%";
+  return v;
+}
+
+function initScenario(id) {
+  currentScenarioId = id;
+  const scenario = SCENARIOS[id];
+  sliderValues = {};
+  scenario.sliders.forEach((s) => (sliderValues[s.key] = s.default));
+  renderTabs();
+  renderQuestion();
+  renderSliders();
+  renderAll();
+}
+
+function renderTabs() {
+  const tabsEl = document.getElementById("tabs");
+  tabsEl.innerHTML = "";
+  Object.values(SCENARIOS).forEach((s) => {
+    const tab = document.createElement("div");
+    tab.className = "tab" + (s.id === currentScenarioId ? " active" : "");
+    tab.textContent = s.name;
+    tab.onclick = () => initScenario(s.id);
+    tabsEl.appendChild(tab);
+  });
+}
+
+function renderQuestion() {
+  document.getElementById("question").textContent = "// " + SCENARIOS[currentScenarioId].question;
+}
+
+function renderSliders() {
+  const wrap = document.getElementById("sliders");
+  wrap.innerHTML = "";
+  SCENARIOS[currentScenarioId].sliders.forEach((s) => {
+    const row = document.createElement("div");
+    row.className = "slider-row";
+    row.innerHTML = `
+      <div class="slider-label">
+        <span class="slider-name">${s.label}</span>
+        <span class="slider-value mono" id="val-${s.key}">${fmtVal(sliderValues[s.key], s.fmt)}</span>
+      </div>
+      <input type="range" id="slider-${s.key}" min="${s.min}" max="${s.max}" step="${s.step}" value="${sliderValues[s.key]}">
+    `;
+    wrap.appendChild(row);
+    const input = row.querySelector("input");
+    input.addEventListener("input", (e) => {
+      sliderValues[s.key] = parseFloat(e.target.value);
+      document.getElementById(`val-${s.key}`).textContent = fmtVal(sliderValues[s.key], s.fmt);
+      renderAll();
+    });
+  });
+}
+
+function computeCurrent() {
+  const scenario = SCENARIOS[currentScenarioId];
+  const params = scenario.mapParams(sliderValues);
+  return solveEquilibrium(params);
+}
+
+function renderNeedle(result) {
+  const pct = result.pStar * 100; // 0 = don't defend, 100 = defend
+  document.getElementById("needlePointer").style.left = pct + "%";
+  const verdict = result.pStar > 0.6
+    ? `Equilibrium favors <strong>active defense</strong> (p* = ${result.pStar.toFixed(2)})`
+    : result.pStar < 0.4
+    ? `Equilibrium favors <strong>minimal defense</strong> (p* = ${result.pStar.toFixed(2)})`
+    : `Equilibrium favors a <strong>mixed strategy</strong> (p* = ${result.pStar.toFixed(2)})`;
+  document.getElementById("needleReadout").innerHTML = verdict +
+    ` · attacker's equilibrium attack probability q* = ${result.qStar.toFixed(2)}`;
+}
+
+function renderStats(result) {
+  const stats = [
+    { label: "p* — Defend probability", value: result.pStar.toFixed(3), cls: "amber" },
+    { label: "q* — Attack probability", value: result.qStar.toFixed(3), cls: "" },
+    { label: "Attack rational?", value: result.attackIsRational ? "YES" : "NO", cls: result.attackIsRational ? "red" : "amber" },
+    { label: "Equilibrium cost", value: "$" + Math.round(result.equilibriumCost).toLocaleString(), cls: "" },
+    { label: "Always-defend cost", value: "$" + Math.round(result.alwaysDefendCost).toLocaleString(), cls: "" },
+    { label: "Never-defend cost", value: "$" + Math.round(result.neverDefendCost).toLocaleString(), cls: "" },
+  ];
+  const grid = document.getElementById("stats");
+  grid.innerHTML = stats.map(s => `
+    <div class="stat">
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value ${s.cls} mono">${s.value}</div>
+    </div>
+  `).join("");
+}
+
+function renderInterpretation(result) {
+  const el = document.getElementById("interpretation");
+  el.textContent = result.interpretation;
+  el.className = "interpretation" + (result.attackIsRational && result.pStar > 0.6 ? " warn" : "");
+}
+
+function renderChart() {
+  const scenario = SCENARIOS[currentScenarioId];
+  const assetSlider = scenario.sliders.find(s => s.key === "systemValue") || scenario.sliders[0];
+  const points = [];
+  const steps = 24;
+  for (let i = 0; i <= steps; i++) {
+    const val = assetSlider.min + (assetSlider.max - assetSlider.min) * (i / steps);
+    const testValues = { ...sliderValues, [assetSlider.key]: val };
+    const params = scenario.mapParams(testValues);
+    const r = solveEquilibrium(params);
+    points.push({ x: val, y: r.pStar });
+  }
+
+  const w = 600, h = 180, pad = 10;
+  const xs = points.map(p => p.x);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const toSvgX = (x) => pad + ((x - minX) / (maxX - minX)) * (w - 2 * pad);
+  const toSvgY = (y) => h - pad - y * (h - 2 * pad);
+
+  let path = "M " + points.map(p => `${toSvgX(p.x).toFixed(1)} ${toSvgY(p.y).toFixed(1)}`).join(" L ");
+
+  // current position marker
+  const currentX = sliderValues[assetSlider.key];
+  const currentResult = computeCurrent();
+  const markerX = toSvgX(currentX);
+  const markerY = toSvgY(currentResult.pStar);
+
+  const svg = document.getElementById("chart");
+  svg.innerHTML = `
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#3A4048" stroke-width="1" />
+    <line x1="${pad}" y1="${toSvgY(0.5)}" x2="${w-pad}" y2="${toSvgY(0.5)}" stroke="#232A33" stroke-width="1" stroke-dasharray="4,4" />
+    <path d="${path}" fill="none" stroke="#D4A24C" stroke-width="2.5" />
+    <circle cx="${markerX}" cy="${markerY}" r="5" fill="#E8E6DE" stroke="#0B0E12" stroke-width="2" />
+  `;
+}
+
+function renderThreshold() {
+  const scenario = SCENARIOS[currentScenarioId];
+  const params = scenario.mapParams(sliderValues);
+  const th = thresholdPosition(params);
+
+  const w = 600, h = 160, pad = 16;
+  const maxVal = Math.max(th.effectiveAttackCost, th.breachGain) * 1.25;
+  const toY = (v) => h - pad - (v / maxVal) * (h - 2 * pad);
+
+  const costY = toY(th.effectiveAttackCost);
+  const gainY = toY(th.breachGain);
+  const inAttackRegion = th.regime === "ATTACK_RATIONAL";
+
+  const svg = document.getElementById("thresholdChart");
+  svg.innerHTML = `
+    <rect x="${pad}" y="${pad}" width="${w/2 - pad}" height="${h - 2*pad}"
+      fill="${inAttackRegion ? 'rgba(192,67,47,0.08)' : 'rgba(212,162,76,0.03)'}" />
+    <rect x="${w/2}" y="${pad}" width="${w/2 - pad}" height="${h - 2*pad}"
+      fill="${!inAttackRegion ? 'rgba(212,162,76,0.08)' : 'rgba(192,67,47,0.03)'}" />
+    <line x1="${w/2}" y1="${pad}" x2="${w/2}" y2="${h-pad}" stroke="#3A4048" stroke-width="1" stroke-dasharray="3,3" />
+
+    <line x1="${pad}" y1="${costY}" x2="${w-pad}" y2="${costY}" stroke="#C0432F" stroke-width="2" />
+    <text x="${pad+4}" y="${costY - 6}" fill="#C0432F" font-family="JetBrains Mono" font-size="10">effective attacker cost</text>
+
+    <line x1="${pad}" y1="${gainY}" x2="${w-pad}" y2="${gainY}" stroke="#D4A24C" stroke-width="2" />
+    <text x="${pad+4}" y="${gainY - 6}" fill="#D4A24C" font-family="JetBrains Mono" font-size="10">expected breach gain</text>
+  `;
+
+  const readout = document.getElementById("thresholdReadout");
+  readout.innerHTML = inAttackRegion
+    ? `Θ-ratio = <strong>${th.thresholdRatio.toFixed(2)}</strong> — gain exceeds cost. To cross the threshold, gain would need to drop by roughly <strong>$${Math.round(th.gainReductionNeededToFlip).toLocaleString()}</strong> (via patching, deterrence, or detection).`
+    : `Θ-ratio = <strong>${th.thresholdRatio.toFixed(2)}</strong> — cost exceeds gain. This system already sits in the economically irrational-to-attack region.`;
+}
+
+function renderRepeatedGame(history) {
+  const w = 600, h = 160, pad = 16;
+  const svg = document.getElementById("repeatedChart");
+
+  if (!history) {
+    svg.innerHTML = `<text x="${w/2}" y="${h/2}" fill="#8A9099" font-family="JetBrains Mono" font-size="12" text-anchor="middle">Run the simulation to see belief drift</text>`;
+    document.getElementById("repeatedReadout").textContent = "";
+    return;
+  }
+
+  const toX = (round) => pad + ((round - 1) / (history.length - 1)) * (w - 2 * pad);
+  const toY = (v) => h - pad - v * (h - 2 * pad);
+
+  const beliefPath = "M " + history.map(pt => `${toX(pt.round).toFixed(1)} ${toY(pt.belief).toFixed(1)}`).join(" L ");
+  const qStarPath = "M " + history.map(pt => `${toX(pt.round).toFixed(1)} ${toY(pt.qStar).toFixed(1)}`).join(" L ");
+
+  const markers = history.filter(pt => pt.attacked).map(pt =>
+    `<circle cx="${toX(pt.round)}" cy="${toY(pt.qStar)}" r="4" fill="${pt.succeeded ? '#C0432F' : '#3A4048'}" stroke="#E8E6DE" stroke-width="1" />`
+  ).join("");
+
+  svg.innerHTML = `
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#3A4048" stroke-width="1" />
+    <path d="${beliefPath}" fill="none" stroke="#8A9099" stroke-width="1.5" stroke-dasharray="4,3" />
+    <path d="${qStarPath}" fill="none" stroke="#D4A24C" stroke-width="2.5" />
+    ${markers}
+  `;
+
+  const sim = { initialQStar: history[0].qStar, finalQStar: history[history.length-1].qStar };
+  const drift = sim.finalQStar > sim.initialQStar ? "escalating" : sim.finalQStar < sim.initialQStar ? "de-escalating" : "stable";
+  const attacks = history.filter(h => h.attacked).length;
+  const successes = history.filter(h => h.succeeded).length;
+  document.getElementById("repeatedReadout").innerHTML =
+    `<strong>${attacks}</strong> probes over 12 rounds, <strong>${successes}</strong> succeeded. Threat is <strong>${drift}</strong> ` +
+    `(q* moved from ${sim.initialQStar.toFixed(2)} to ${sim.finalQStar.toFixed(2)}). ` +
+    `<span style="color:#8A9099">Dashed line = attacker's belief about your residual risk · solid amber = attack probability</span>`;
+}
+
+document.getElementById("runRepeatedGame").addEventListener("click", () => {
+  const scenario = SCENARIOS[currentScenarioId];
+  const params = scenario.mapParams(sliderValues);
+  const sim = simulateRepeatedGame(params, 12);
+  renderRepeatedGame(sim.history);
+});
+
+function renderApiBlock(result) {
+  const scenario = SCENARIOS[currentScenarioId];
+  const params = scenario.mapParams(sliderValues);
+  const body = JSON.stringify(params, null, 2)
+    .replace(/"(\w+)":/g, '<span class="key">"$1"</span>:');
+  document.getElementById("apiBlock").innerHTML =
+    `<span class="comment"># Equivalent to this real request against the API:</span>\n` +
+    `POST /simulate\n` +
+    body;
+}
+
+function renderAll() {
+  const result = computeCurrent();
+  renderNeedle(result);
+  renderStats(result);
+  renderInterpretation(result);
+  renderChart();
+  renderThreshold();
+  renderApiBlock(result);
+}
+
+function renderRansomwareChart(cmp) {
+  const w = 600, h = 200, pad = 16;
+  const svg = document.getElementById("ransomwareChart");
+  if (!cmp) {
+    svg.innerHTML = `<text x="${w/2}" y="${h/2}" fill="#8A9099" font-family="JetBrains Mono" font-size="12" text-anchor="middle">Run the comparison to see cumulative harm diverge</text>`;
+    document.getElementById("ransomwareReadout").textContent = "";
+    return;
+  }
+  const rounds = cmp.allowed.history.length;
+  let cumA = 0, cumB = 0;
+  const allowedCum = [], bannedCum = [];
+  for (let i = 0; i < rounds; i++) {
+    cumA += cmp.allowed.history[i].totalHarmThisRound;
+    cumB += cmp.banned.history[i].totalHarmThisRound;
+    allowedCum.push(cumA);
+    bannedCum.push(cumB);
+  }
+  const maxVal = Math.max(...allowedCum, ...bannedCum) * 1.1;
+  const toX = (i) => pad + (i / (rounds - 1)) * (w - 2 * pad);
+  const toY = (v) => h - pad - (v / maxVal) * (h - 2 * pad);
+
+  const allowedPath = "M " + allowedCum.map((v, i) => `${toX(i).toFixed(1)} ${toY(v).toFixed(1)}`).join(" L ");
+  const bannedPath = "M " + bannedCum.map((v, i) => `${toX(i).toFixed(1)} ${toY(v).toFixed(1)}`).join(" L ");
+
+  let crossoverMarker = "";
+  if (cmp.crossoverRound) {
+    const cx = toX(cmp.crossoverRound - 1);
+    crossoverMarker = `<line x1="${cx}" y1="${pad}" x2="${cx}" y2="${h-pad}" stroke="#E8E6DE" stroke-width="1" stroke-dasharray="3,3" />
+      <text x="${cx+4}" y="${pad+10}" fill="#E8E6DE" font-family="JetBrains Mono" font-size="10">crossover: round ${cmp.crossoverRound}</text>`;
+  }
+
+  svg.innerHTML = `
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="#3A4048" stroke-width="1" />
+    <path d="${allowedPath}" fill="none" stroke="#C0432F" stroke-width="2.5" />
+    <path d="${bannedPath}" fill="none" stroke="#D4A24C" stroke-width="2.5" />
+    ${crossoverMarker}
+  `;
+
+  const readout = document.getElementById("ransomwareReadout");
+  readout.innerHTML = cmp.crossoverRound
+    ? `<strong style="color:#C0432F">Red = payments allowed</strong> · <strong style="color:#D4A24C">Amber = payments banned</strong>. ` +
+      `Banning costs more in the short run but crosses over to net-beneficial at <strong>round ${cmp.crossoverRound}</strong> — ` +
+      `the ban only "wins" once enough rounds pass for starved attacker capability to outweigh the harm of victims losing data outright.`
+    : `<strong style="color:#C0432F">Red = payments allowed</strong> · <strong style="color:#D4A24C">Amber = payments banned</strong>. ` +
+      `No crossover within this window — under these parameters, banning ${cmp.banReducesHarm ? 'already' : 'does not yet'} reduce total harm.`;
+}
+
+document.getElementById("runRansomware").addEventListener("click", () => {
+  const params = {
+    ...RANSOMWARE_DEFAULTS,
+    ransomDemand: parseFloat(document.getElementById("rw-ransom").value),
+    dataValueIfLost: parseFloat(document.getElementById("rw-loss").value),
+    banPenalty: parseFloat(document.getElementById("rw-penalty").value),
+    financingSensitivity: parseFloat(document.getElementById("rw-financing").value),
+  };
+  const cmp = compareBanPolicy(params, 25);
+  renderRansomwareChart(cmp);
+});
+
+["rw-ransom", "rw-loss", "rw-penalty", "rw-financing"].forEach((id) => {
+  document.getElementById(id).addEventListener("input", (e) => {
+    const v = parseFloat(e.target.value);
+    const label = document.getElementById("val-" + id);
+    if (id === "rw-financing") label.textContent = Math.round(v * 100) + "%";
+    else label.textContent = "$" + Math.round(v).toLocaleString();
+  });
+});
+
+initScenario("patchTiming");
+renderRepeatedGame(null);
+renderRansomwareChart(null);
+</script>
+
+</body>
+</html>
