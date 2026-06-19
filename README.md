@@ -1,6 +1,6 @@
 # Equilibrium — A Threshold Law for Security Economics
 
-**Live demo:** _add your GitHub Pages URL here after deployment_
+**Live demo:** https://leeyanlawrence-web.github.io/equilibrium-engine/
 **Built for:** Moonshot Hackathon 2026
 
 ---
